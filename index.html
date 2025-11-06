@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskMaster - Login</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="auth-box">
+            <div class="logo">
+                <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
+                    <circle cx="30" cy="30" r="28" stroke="#6366f1" stroke-width="4"/>
+                    <path d="M20 30 L27 37 L40 24" stroke="#6366f1" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <h1>TaskMaster</h1>
+                <p>Organize sua vida de forma inteligente</p>
+            </div>
+            
+            <!-- Formulário de Login -->
+            <form id="loginForm" class="auth-form">
+                <h2>Entrar na Conta</h2>
+                <div class="form-group">
+                    <label for="loginEmail">E-mail</label>
+                    <input type="email" id="loginEmail" required placeholder="seu@email.com">
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Senha</label>
+                    <input type="password" id="loginPassword" required placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn btn-primary">Entrar</button>
+                <p class="toggle-form">
+                    Não tem uma conta? <a href="#" id="showRegister">Criar conta</a>
+                </p>
+            </form>
+
+            <!-- Formulário de Registro -->
+            <form id="registerForm" class="auth-form hidden">
+                <h2>Criar Conta</h2>
+                <div class="form-group">
+                    <label for="registerName">Nome Completo</label>
+                    <input type="text" id="registerName" required placeholder="João Silva">
+                </div>
+                <div class="form-group">
+                    <label for="registerEmail">E-mail</label>
+                    <input type="email" id="registerEmail" required placeholder="seu@email.com">
+                </div>
+                <div class="form-group">
+                    <label for="registerPassword">Senha</label>
+                    <input type="password" id="registerPassword" required placeholder="••••••••" minlength="6">
+                </div>
+                <div class="form-group">
+                    <label for="registerConfirmPassword">Confirmar Senha</label>
+                    <input type="password" id="registerConfirmPassword" required placeholder="••••••••" minlength="6">
+                </div>
+                <button type="submit" class="btn btn-primary">Criar Conta</button>
+                <p class="toggle-form">
+                    Já tem uma conta? <a href="#" id="showLogin">Fazer login</a>
+                </p>
+            </form>
+        </div>
+    </div>
+
+    <script src="auth.js"></script>
+</body>
+</html>
