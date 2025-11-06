@@ -1,3 +1,8 @@
+// Configuração da API
+const API_URL = window.location.hostname === 'localhost' 
+    ? 'http://localhost:3000/api' 
+    : '/api';
+
 // Elementos do DOM
 const loginForm = document.getElementById('loginForm');
 const registerForm = document.getElementById('registerForm');
@@ -18,7 +23,7 @@ showLoginLink.addEventListener('click', (e) => {
 });
 
 // Processar registro de novo usuário
-registerForm.addEventListener('submit', (e) => {
+registerForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     
     const name = document.getElementById('registerName').value.trim();
@@ -37,62 +42,73 @@ registerForm.addEventListener('submit', (e) => {
         return;
     }
     
-    // Verificar se o usuário já existe
-    const users = JSON.parse(localStorage.getItem('users') || '[]');
-    const userExists = users.find(u => u.email === email);
-    
-    if (userExists) {
-        alert('❌ Este e-mail já está cadastrado!');
-        return;
+    try {
+        const response = await fetch(`${API_URL}/auth/register`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ name, email, password })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Salvar token
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('user', JSON.stringify(data.user));
+            
+            alert('✅ Conta criada com sucesso!');
+            
+            // Redirecionar para dashboard
+            window.location.href = 'dashboard.html';
+        } else {
+            alert(`❌ ${data.message}`);
+        }
+    } catch (error) {
+        console.error('Erro ao registrar:', error);
+        alert('❌ Erro ao criar conta. Tente novamente.');
     }
-    
-    // Criar novo usuário
-    const newUser = {
-        id: Date.now(),
-        name,
-        email,
-        password, // Em produção, isso deveria ser criptografado!
-        createdAt: new Date().toISOString()
-    };
-    
-    users.push(newUser);
-    localStorage.setItem('users', JSON.stringify(users));
-    
-    alert('✅ Conta criada com sucesso! Faça login para continuar.');
-    
-    // Voltar para o formulário de login
-    registerForm.classList.add('hidden');
-    loginForm.classList.remove('hidden');
-    registerForm.reset();
 });
 
 // Processar login
-loginForm.addEventListener('submit', (e) => {
+loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     
     const email = document.getElementById('loginEmail').value.trim();
     const password = document.getElementById('loginPassword').value;
     
-    // Buscar usuários
-    const users = JSON.parse(localStorage.getItem('users') || '[]');
-    const user = users.find(u => u.email === email && u.password === password);
-    
-    if (!user) {
-        alert('❌ E-mail ou senha incorretos!');
-        return;
+    try {
+        const response = await fetch(`${API_URL}/auth/login`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ email, password })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Salvar token e dados do usuário
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('user', JSON.stringify(data.user));
+            
+            // Redirecionar para dashboard
+            window.location.href = 'dashboard.html';
+        } else {
+            alert(`❌ ${data.message}`);
+        }
+    } catch (error) {
+        console.error('Erro ao fazer login:', error);
+        alert('❌ Erro ao fazer login. Tente novamente.');
     }
-    
-    // Salvar usuário logado
-    localStorage.setItem('currentUser', JSON.stringify(user));
-    
-    // Redirecionar para dashboard
-    window.location.href = 'dashboard.html';
 });
 
 // Verificar se já está logado ao carregar a página
 window.addEventListener('load', () => {
-    const currentUser = localStorage.getItem('currentUser');
-    if (currentUser && window.location.pathname.includes('index.html')) {
+    const token = localStorage.getItem('token');
+    if (token && (window.location.pathname === '/' || window.location.pathname.includes('index.html'))) {
         window.location.href = 'dashboard.html';
     }
 });

@@ -1,7 +1,13 @@
-// Verificar autenticação
-const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+// Configuração da API
+const API_URL = window.location.hostname === 'localhost' 
+    ? 'http://localhost:3000/api' 
+    : '/api';
 
-if (!currentUser) {
+// Verificar autenticação
+const token = localStorage.getItem('token');
+const currentUser = JSON.parse(localStorage.getItem('user'));
+
+if (!token || !currentUser) {
     window.location.href = 'index.html';
 }
 
@@ -32,48 +38,75 @@ updateStats();
 // Logout
 logoutBtn.addEventListener('click', () => {
     if (confirm('Deseja realmente sair?')) {
-        localStorage.removeItem('currentUser');
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
         window.location.href = 'index.html';
     }
 });
 
 // Adicionar tarefa
-taskForm.addEventListener('submit', (e) => {
+taskForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     
     const taskText = taskInput.value.trim();
     
     if (!taskText) return;
     
-    const newTask = {
-        id: Date.now(),
-        userId: currentUser.id,
-        text: taskText,
-        completed: false,
-        createdAt: new Date().toISOString()
-    };
-    
-    tasks.push(newTask);
-    saveTasks();
-    renderTasks();
-    updateStats();
-    
-    taskInput.value = '';
-    taskInput.focus();
+    try {
+        const response = await fetch(`${API_URL}/tasks`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ text: taskText })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            await loadTasks();
+            taskInput.value = '';
+            taskInput.focus();
+        } else {
+            alert(`❌ ${data.message}`);
+        }
+    } catch (error) {
+        console.error('Erro ao adicionar tarefa:', error);
+        alert('❌ Erro ao adicionar tarefa. Tente novamente.');
+    }
 });
 
-// Carregar tarefas do localStorage
-function loadTasks() {
-    const allTasks = JSON.parse(localStorage.getItem('tasks') || '[]');
-    tasks = allTasks.filter(task => task.userId === currentUser.id);
+// Carregar tarefas do servidor
+async function loadTasks() {
+    try {
+        const response = await fetch(`${API_URL}/tasks`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            tasks = data.tasks.map(task => ({
+                id: task._id,
+                text: task.text,
+                completed: task.completed,
+                createdAt: task.createdAt
+            }));
+            renderTasks();
+            updateStats();
+        }
+    } catch (error) {
+        console.error('Erro ao carregar tarefas:', error);
+        alert('❌ Erro ao carregar tarefas.');
+    }
 }
 
-// Salvar tarefas no localStorage
+// Salvar tarefas (não usado mais, tudo é via API)
 function saveTasks() {
-    const allTasks = JSON.parse(localStorage.getItem('tasks') || '[]');
-    const otherUsersTasks = allTasks.filter(task => task.userId !== currentUser.id);
-    const updatedTasks = [...otherUsersTasks, ...tasks];
-    localStorage.setItem('tasks', JSON.stringify(updatedTasks));
+    // Função mantida para compatibilidade, mas não faz nada
 }
 
 // Renderizar tarefas
@@ -134,27 +167,59 @@ function createTaskElement(task) {
 }
 
 // Alternar estado da tarefa (completada/pendente)
-function toggleTask(e) {
-    const taskId = parseInt(e.target.dataset.id);
+async function toggleTask(e) {
+    const taskId = e.target.dataset.id;
     const task = tasks.find(t => t.id === taskId);
     
     if (task) {
-        task.completed = !task.completed;
-        saveTasks();
-        renderTasks();
-        updateStats();
+        try {
+            const response = await fetch(`${API_URL}/tasks/${taskId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ completed: !task.completed })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                await loadTasks();
+            } else {
+                alert(`❌ ${data.message}`);
+            }
+        } catch (error) {
+            console.error('Erro ao atualizar tarefa:', error);
+            alert('❌ Erro ao atualizar tarefa.');
+        }
     }
 }
 
 // Excluir tarefa
-function deleteTask(e) {
-    const taskId = parseInt(e.target.dataset.id);
+async function deleteTask(e) {
+    const taskId = e.target.dataset.id;
     
     if (confirm('Deseja realmente excluir esta tarefa?')) {
-        tasks = tasks.filter(t => t.id !== taskId);
-        saveTasks();
-        renderTasks();
-        updateStats();
+        try {
+            const response = await fetch(`${API_URL}/tasks/${taskId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                await loadTasks();
+            } else {
+                alert(`❌ ${data.message}`);
+            }
+        } catch (error) {
+            console.error('Erro ao deletar tarefa:', error);
+            alert('❌ Erro ao deletar tarefa.');
+        }
     }
 }
 
