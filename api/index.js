@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const connectDB = require('./config/database');
 
 const app = express();
@@ -11,7 +12,7 @@ connectDB();
 // Middlewares
 app.use(cors());
 app.use(express.json());
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, '..')));
 
 // Rotas da API
 app.use('/api/auth', require('./routes/auth'));
@@ -28,11 +29,11 @@ app.get('/api/health', (req, res) => {
 
 // Servir arquivos estáticos (frontend)
 app.get('/', (req, res) => {
-    res.sendFile(__dirname + '/../index.html');
+    res.sendFile(path.join(__dirname, '..', 'index.html'));
 });
 
 app.get('/dashboard', (req, res) => {
-    res.sendFile(__dirname + '/../dashboard.html');
+    res.sendFile(path.join(__dirname, '..', 'dashboard.html'));
 });
 
 // Tratamento de erros
